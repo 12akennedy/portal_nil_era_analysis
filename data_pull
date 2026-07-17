@@ -1,0 +1,54 @@
+import os, requests, pandas as pd
+
+api_key = 'Hwn2XvKHqTI7uce92+yqzufelMCwiiX9Fdp4N8m7Gr1lAcpIqlebKWmTKzScRfvp'
+
+url = "https://api.collegefootballdata.com/records"
+
+records_df = pd.concat(
+    pd.DataFrame(
+        requests.get(
+            url,
+            params={"year": y,"classification": 'i'},
+            headers={"Authorization": f"Bearer {api_key}"}
+        ).json()
+    )
+    for y in range(2015, 2027)  # 2015 to 2026 inclusive
+)
+
+records_df.head()
+
+
+url = "https://api.collegefootballdata.com/games"
+
+games_df = pd.concat(
+    pd.DataFrame(
+        requests.get(
+            url,
+            params={"year": y},
+            headers={"Authorization": f"Bearer {api_key}"}
+        ).json()
+    )
+    for y in range(2015, 2027)  # 2013 to 2026 inclusive
+)
+
+games_df.head()
+
+games_clean = games_df.copy()
+
+# separate home v away so that each team has their own section, to allow for easy aggregation
+games_home = games_df[['season','homeTeam','homeConference','homeClassification','homePoints','awayPoints']]
+games_home.columns = ['year','team','conference','classification','scored','allowed']
+
+games_away = games_df[['season','awayTeam','awayConference','awayClassification','awayPoints','homePoints',]]
+games_away.columns = ['year','team','conference','classification','scored','allowed']
+
+# Vertically merge, only keep rows with classification as fbs
+games_clean = pd.concat([games_home, games_away])
+games_clean = games_clean[games_clean['classification'] == 'fbs'].drop(columns='classification')
+# Aggregate total points scored, along with games column
+games_clean = games_clean.groupby(['year','team','conference']).agg(
+    scored = ('scored','sum'),
+    allowed = ('allowed','sum'),
+    games=('team','size')
+).reset_index()
+games_clean.head()
