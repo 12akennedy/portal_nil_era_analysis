@@ -12,7 +12,7 @@ records_df = pd.concat(
             headers={"Authorization": f"Bearer {api_key}"}
         ).json()
     )
-    for y in range(2015, 2027)  # 2015 to 2026 inclusive
+    for y in range(2015, 2026)  # 2015 to 2026 inclusive
 )
 
 records_df.head()
@@ -28,14 +28,14 @@ games_df = pd.concat(
             headers={"Authorization": f"Bearer {api_key}"}
         ).json()
     )
-    for y in range(2015, 2027)  # 2013 to 2026 inclusive
+    for y in range(2015, 2026)  # 2013 to 2026 inclusive
 )
 
 games_df.head()
 
 games_clean = games_df.copy()
 
-# separate home v away so that each team has their own section, to allow for easy aggregation
+# separate home and away so that each team has their own section, to allow for easy aggregation
 games_home = games_df[['season','homeTeam','homeConference','homeClassification','homePoints','awayPoints']]
 games_home.columns = ['year','team','conference','classification','scored','allowed']
 
@@ -52,3 +52,7 @@ games_clean = games_clean.groupby(['year','team','conference']).agg(
     games=('team','size')
 ).reset_index()
 games_clean.head()
+
+# Calculate Pythagorean win probability
+games_clean['exp_win_rate'] = 1 / (1 + (games_clean['allowed'] / games_clean['scored'])**2.37)
+games_clean['exp_win'] = games_clean['exp_win_rate'] * games_clean['games']
