@@ -1,4 +1,4 @@
-import os, requests, pandas as pd
+import os, requests, pandas as pd, numpy as np
 
 # Import individual game data
 url = "https://api.collegefootballdata.com/games"
