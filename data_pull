@@ -67,22 +67,21 @@ games_clean['exp_win'] = games_clean['exp_win_rate'] * games_clean['games']
 games_clean = pd.merge(games_clean, sp_df2, on=['year','team'])
 # create pre and post data, using year's before and after 2020 (but not including, since that year was messed up)
 # Go by conference first, then school, due to conference realignment
-comp_df = games_clean.copy()
-comp_df = comp_df[comp_df['year'] != 2020]
-comp_df['era'] = np.where(comp_df['year'] <2020, 'pre','post')
-comp_df = comp_df.groupby(['era','conference']).agg(
+conf_df = games_clean.copy()
+conf_df = conf_df[conf_df['year'] != 2020]
+conf_df['era'] = np.where(conf_df['year'] <2020, 'pre','post')
+conf_df = conf_df.groupby(['era','conference']).agg(
     win_rate_avg = ('win_rate','mean'),
     exp_win_avg = ('exp_win_rate', 'mean'),
     sp_avg = ('rating','mean')
 ).reset_index()
-
 # convert to wide
-comp_df = comp_df.pivot(index=['conference'], columns='era', values=['win_rate_avg', 'exp_win_avg','sp_avg']).reset_index()
-comp_df.columns = [f'{col[0]}_{col[1]}' if len(col) > 1 else col[0] for col in comp_df.columns]
-comp_df.columns = [col.rstrip('_') for col in comp_df.columns]
-comp_df['exp_dif'] = comp_df['win_rate_avg_post'] - comp_df['win_rate_avg_pre']
-comp_df['win_dif'] = comp_df['exp_win_avg_post'] - comp_df['exp_win_avg_pre']
-comp_df['sp_dif'] = comp_df['sp_avg_post'] - comp_df['sp_avg_pre']
+conf_df = conf_df.pivot(index=['conference'], columns='era', values=['win_rate_avg', 'exp_win_avg','sp_avg']).reset_index()
+conf_df.columns = [f'{col[0]}_{col[1]}' if len(col) > 1 else col[0] for col in conf_df.columns]
+conf_df.columns = [col.rstrip('_') for col in conf_df.columns]
+conf_df['exp_dif'] = conf_df['win_rate_avg_post'] - conf_df['win_rate_avg_pre']
+conf_df['win_dif'] = conf_df['exp_win_avg_post'] - conf_df['exp_win_avg_pre']
+conf_df['sp_dif'] = conf_df['sp_avg_post'] - conf_df['sp_avg_pre']
 
 
 # Normalize the dif columns so equal weight can be given when measuring
