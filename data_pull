@@ -93,3 +93,27 @@ normalized = scaler.fit_transform(diff_df[['exp_dif','win_dif','sp_dif']])
 diff_df['composite_score'] = normalized.mean(axis=1)
 diff_df = diff_df.sort_values(by = 'composite_score', ascending=False)
 print(diff_df)
+# repeat, but by school
+# Go by conference first, then school, due to conference realignment
+school_df = games_clean.copy()
+school_df = school_df[school_df['year'] != 2020]
+school_df['era'] = np.where(school_df['year'] <2020, 'pre','post')
+school_df = school_df.groupby(['era','team']).agg(
+    win_rate_avg = ('win_rate','mean'),
+    exp_win_avg = ('exp_win_rate', 'mean'),
+    sp_avg = ('rating','mean')
+).reset_index()
+# convert to wide
+school_df = school_df.pivot(index=['team'], columns='era', values=['win_rate_avg', 'exp_win_avg','sp_avg']).reset_index()
+school_df.columns = [f'{col[0]}_{col[1]}' if len(col) > 1 else col[0] for col in school_df.columns]
+school_df.columns = [col.rstrip('_') for col in school_df.columns]
+school_df['exp_dif'] = school_df['win_rate_avg_post'] - school_df['win_rate_avg_pre']
+school_df['win_dif'] = school_df['exp_win_avg_post'] - school_df['exp_win_avg_pre']
+school_df['sp_dif'] = school_df['sp_avg_post'] - school_df['sp_avg_pre']
+
+school_diff_df = school_df[['team','exp_dif','win_dif','sp_dif']]
+scaler = MinMaxScaler()
+normalized = scaler.fit_transform(school_diff_df[['exp_dif','win_dif','sp_dif']])
+school_diff_df['composite_score'] = normalized.mean(axis=1)
+school_diff_df = school_diff_df.sort_values(by = 'composite_score', ascending=False)
+school_diff_df.head()
